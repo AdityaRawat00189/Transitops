@@ -31,13 +31,7 @@ const getAllMaintenance = async (req, res) => {
 };
 
 const createMaintenance = async (req, res) => {
-
-    const session = await mongoose.startSession();
-
     try {
-
-        session.startTransaction();
-
         const {
             vehicle,
             maintenanceType,
@@ -47,9 +41,6 @@ const createMaintenance = async (req, res) => {
 
         // Validate request body
         if (!vehicle || !maintenanceType || !description || cost == null) {
-
-            await session.abortTransaction();
-
             return res.status(400).json({
                 success: false,
                 message: "All fields are required.",
@@ -57,12 +48,9 @@ const createMaintenance = async (req, res) => {
         }
 
         // Find vehicle
-        const vehicleDoc = await Vehicle.findById(vehicle).session(session);
+        const vehicleDoc = await Vehicle.findById(vehicle);
 
         if (!vehicleDoc) {
-
-            await session.abortTransaction();
-
             return res.status(404).json({
                 success: false,
                 message: "Vehicle not found.",
@@ -71,9 +59,6 @@ const createMaintenance = async (req, res) => {
 
         // Vehicle already retired
         if (vehicleDoc.status === "Retired") {
-
-            await session.abortTransaction();
-
             return res.status(400).json({
                 success: false,
                 message: "Retired vehicle cannot undergo maintenance.",
@@ -82,9 +67,6 @@ const createMaintenance = async (req, res) => {
 
         // Already in maintenance
         if (vehicleDoc.status === "InShop") {
-
-            await session.abortTransaction();
-
             return res.status(400).json({
                 success: false,
                 message: "Vehicle is already under maintenance.",
@@ -93,9 +75,6 @@ const createMaintenance = async (req, res) => {
 
         // Vehicle currently on trip
         if (vehicleDoc.status === "OnTrip") {
-
-            await session.abortTransaction();
-
             return res.status(400).json({
                 success: false,
                 message: "Vehicle is currently on a trip.",
@@ -103,47 +82,29 @@ const createMaintenance = async (req, res) => {
         }
 
         // Create maintenance record
-        const maintenance = await Maintenance.create(
-            [
-                {
-                    vehicle,
-                    maintenanceType,
-                    description,
-                    cost,
-                    status: "Open",
-                },
-            ],
-            { session }
-        );
+        const maintenance = await Maintenance.create({
+            vehicle,
+            maintenanceType,
+            description,
+            cost,
+            status: "Open",
+        });
 
         // Update vehicle status
         vehicleDoc.status = "InShop";
-
-        await vehicleDoc.save({ session });
-
-        await session.commitTransaction();
+        await vehicleDoc.save();
 
         return res.status(201).json({
             success: true,
             message: "Maintenance record created successfully.",
-            data: maintenance[0],
+            data: maintenance,
         });
-
     } catch (error) {
-
-        await session.abortTransaction();
-
         console.error(error);
-
         return res.status(500).json({
             success: false,
             message: "Internal Server Error",
         });
-
-    } finally {
-
-        session.endSession();
-
     }
 };
 
@@ -183,22 +144,13 @@ const getMaintenanceById = async (req, res) => {
 };
 
 const closeMaintenance = async (req, res) => {
-
-    const session = await mongoose.startSession();
-
     try {
-
-        session.startTransaction();
-
         const { id } = req.params;
 
         // Find maintenance record
-        const maintenance = await Maintenance.findById(id).session(session);
+        const maintenance = await Maintenance.findById(id);
 
         if (!maintenance) {
-
-            await session.abortTransaction();
-
             return res.status(404).json({
                 success: false,
                 message: "Maintenance record not found.",
@@ -207,9 +159,6 @@ const closeMaintenance = async (req, res) => {
 
         // Already completed
         if (maintenance.status === "Completed") {
-
-            await session.abortTransaction();
-
             return res.status(400).json({
                 success: false,
                 message: "Maintenance is already completed.",
@@ -217,12 +166,9 @@ const closeMaintenance = async (req, res) => {
         }
 
         // Find vehicle
-        const vehicle = await Vehicle.findById(maintenance.vehicle).session(session);
+        const vehicle = await Vehicle.findById(maintenance.vehicle);
 
         if (!vehicle) {
-
-            await session.abortTransaction();
-
             return res.status(404).json({
                 success: false,
                 message: "Vehicle not found.",
@@ -233,37 +179,24 @@ const closeMaintenance = async (req, res) => {
         maintenance.status = "Completed";
 
         // Restore vehicle status
-        // (Don't change if vehicle has been retired)
         if (vehicle.status !== "Retired") {
             vehicle.status = "Available";
         }
 
-        await maintenance.save({ session });
-        await vehicle.save({ session });
-
-        await session.commitTransaction();
+        await maintenance.save();
+        await vehicle.save();
 
         return res.status(200).json({
             success: true,
             message: "Maintenance completed successfully.",
             data: maintenance,
         });
-
     } catch (error) {
-
-        await session.abortTransaction();
-
         console.error(error);
-
         return res.status(500).json({
             success: false,
             message: "Internal Server Error",
         });
-
-    } finally {
-
-        session.endSession();
-
     }
 };
 
