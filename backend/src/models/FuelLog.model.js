@@ -12,7 +12,6 @@ const fuelLogSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Trip",
         },
-
         liters: {
             type: Number,
             required: true,
