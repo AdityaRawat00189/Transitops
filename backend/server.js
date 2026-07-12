@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import authRoutes from "./src/routes/authroutes.js";
 import vehicleRoutes from "./src/routes/vehicle.routes.js";
-
+import driverRoutes from "./src/routes/driver.routes.js";
 dotenv.config();
 
 // Connect to MongoDB
@@ -25,6 +25,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/vehicles", vehicleRoutes);
+app.use("/api/drivers", driverRoutes);
 
 // Start server
 app.listen(PORT, () => {
