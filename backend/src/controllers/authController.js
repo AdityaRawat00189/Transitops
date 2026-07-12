@@ -11,7 +11,7 @@ function generateToken(id, role){
 const registerUser = async (req,res) => {
     try {
         const {name, email, password, role} = req.body;
-        
+
         if(!name || !email || !password || !role) {
             return res.status(400).json({message : "Please Fill all mandatory fields"});
         }

@@ -1,7 +1,7 @@
 import Trip from "../models/Trip.model.js";
 import Driver from "../models/Driver.model.js";
 import Vehicle from "../models/Vehicle.model.js";
-
+import mongoose from "mongoose";
 
 const createTrip = async(req, res) => {
     try {
