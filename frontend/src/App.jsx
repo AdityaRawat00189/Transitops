@@ -1,37 +1,39 @@
-import { useState } from 'react';
-import { Auth } from './pages/Auth';
-// Remove App.css import if it conflicts with the dark theme, otherwise leave it.
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Layout } from '@/components/Layout';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Login } from '@/pages/Login';
+import { Dashboard } from '@/pages/Dashboard';
+import { Vehicles } from '@/pages/Vehicles';
+import { Drivers } from '@/pages/Drivers';
+import { Dispatch } from '@/pages/Dispatch';
+import { Maintenance } from '@/pages/Maintenance';
+import { Expenses } from '@/pages/Expenses';
+import { Analytics } from '@/pages/Analytics';
+import { Toaster } from '@/components/ui/toaster';
 
 function App() {
-  const [user, setUser] = useState(null);
-
-  const handleAuthSuccess = (userData) => {
-    setUser(userData);
-    localStorage.setItem('token', userData.token);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.clear();
-  };
-
-  if (user) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#fff', background: '#0a0e14', minHeight: '100vh' }}>
-        <h1>🚀 Console Active</h1>
-        <p>Terminal assigned to: <strong>{user.name}</strong> ({user.role})</p>
-        <button 
-          onClick={handleLogout} 
-          style={{ padding: '10px 20px', marginTop: '20px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-        >
-          Terminate Session
-        </button>
-      </div>
-    );
-  }
-
-  return <Auth onAuthSuccess={handleAuthSuccess} />;
+  return (
+    <>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="vehicles" element={<Vehicles />} />
+              <Route path="drivers" element={<Drivers />} />
+              <Route path="dispatch" element={<Dispatch />} />
+              <Route path="maintenance" element={<Maintenance />} />
+              <Route path="expenses" element={<Expenses />} />
+              <Route path="analytics" element={<Analytics />} />
+            </Route>
+          </Route>
+        </Routes>
+      </Router>
+      <Toaster />
+    </>
+  );
 }
 
 export default App;
