@@ -1,4 +1,4 @@
-import Driver from '../models/driver.model.js';
+import Driver from '../models/Driver.model.js';
 
 
 //fetch all drivers
