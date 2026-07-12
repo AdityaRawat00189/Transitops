@@ -1,6 +1,14 @@
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+
+import connectDB from "./src/config/db.js";
+import authRoutes from "./src/routes/authroutes.js";
+
+dotenv.config();
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,6 +21,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Backend server is running 🚀");
 });
+app.use("/api/auth", authRoutes);
 
 // Start server
 app.listen(PORT, () => {

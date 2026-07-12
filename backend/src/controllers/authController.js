@@ -1,0 +1,80 @@
+import User from '../models/User.model.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+
+function generateToken(id){
+    const my_secret_key = process.env.MY_SECRET_KEY;
+    
+    return jwt.sign({id},my_secret_key,{expiresIn: '30d'})
+}
+
+const registerUser = async (req,res) => {
+    try {
+        const {name, email, password, role} = req.body;
+        
+
+        // 1. Basic Validation (rooNumber is Optional)
+        if(!name || !email || !password || !role) {
+            return res.status(400).json({message : "Please Fill all mandatory fields"});
+        }
+
+        if(!(role == "FleetManager" || role == "Driver" || role == "SafetyOfficer" || role == "FinancialAnalyst")) {
+            return res.status(400).json({message : "Invalid Role. Please choose a valid role."});
+        } 
+
+        const userExists = await User.findOne({email});
+        if(userExists) {
+            return res.status(409).json({message : "User already exists"})
+        }
+
+        
+        const user = await User.create({
+            name,
+            email,
+            password,
+            role,
+        });
+
+        return res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id),
+        });
+
+    } catch (error) {
+        res.status(500).json({message: "Signup Failed", error: error.message })
+    }
+};
+
+const loginUser = async (req,res) => {
+    try {
+        const {email, password} = req.body;
+        const user = await User.findOne({email});
+
+        if(!user) {
+            return res.status(404).json({message: "User Not Found"});
+        }
+        
+        // Password Match
+        const isMatch = await bcrypt.compare(password, user.password);
+        if(!isMatch) {
+            return res.status(400).json({message: "Invalid Credentials"});
+        }
+
+        // Attach JWT token and return back;
+        return res.status(200).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id)
+        })
+
+    } catch (error) {
+        res.status(500).json({message: "Login Failed", error: error.message});
+    }
+}
+
+export { registerUser, loginUser };
