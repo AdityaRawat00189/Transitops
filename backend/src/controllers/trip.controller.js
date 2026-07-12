@@ -381,10 +381,11 @@ const completeTrip = async (req, res) => {
     }
 }
 const cancelTrip = async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const id = req.params.id;
         const trip = await Trip.findById(id);
-
+        session.startTransaction();
 
         const driverId = trip.driver;
         const driver = await Driver.findById(driverId);
@@ -392,6 +393,7 @@ const cancelTrip = async (req, res) => {
         const vehicle = await Vehicle.findById(vechicleId);
 
         if (!trip) {
+            await session.abortTransaction();
             return res.status(404).json({
                 success: false,
                 message: "Trip not found."
@@ -417,6 +419,7 @@ const cancelTrip = async (req, res) => {
         vehicle.status = "Available";
         await driver.save();
         await vehicle.save();
+        await session.commitTransaction();
         return res.status(200).json({
             success: true,
             message: "Trip cancelled successfully.",
@@ -424,10 +427,13 @@ const cancelTrip = async (req, res) => {
         });
 
     } catch (error) {
+        await session.abortTransaction();
         return res.status(500).json({
             success: false,
             message: "Internal Server Error"
         });
+    } finally {
+        session.endSession();
     }
 }
 

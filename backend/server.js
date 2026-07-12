@@ -6,6 +6,7 @@ import connectDB from "./src/config/db.js";
 import authRoutes from "./src/routes/authroutes.js";
 import vehicleRoutes from "./src/routes/vehicle.routes.js";
 import driverRoutes from "./src/routes/driver.routes.js";
+import tripRoutes from "./src/routes/trip.routes.js";
 dotenv.config();
 
 // Connect to MongoDB
