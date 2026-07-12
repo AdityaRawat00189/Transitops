@@ -20,7 +20,7 @@ const protect = async (req,res, next) => {
                 return res.status(401).json({ message: "User no longer exists" });
             }
 
-            console.log(`Authenticated: ${req.user.name} from ${req.user.collegeName}`);
+            console.log(`Authenticated: ${req.user.name} from ${req.user.email}`);
 
             next();
 
@@ -35,4 +35,21 @@ const protect = async (req,res, next) => {
     }
 };
 
-export { protect };
+
+const authorize = (...allowedRoles) => {
+
+    return (req, res, next) => {
+
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({
+                message: "Access denied"
+            });
+        }
+
+        next();
+
+    };
+
+};
+
+export { protect, authorize };

@@ -60,6 +60,13 @@ const vehicleSchema = new mongoose.Schema(
             ],
             default: "Available",
         },
+        isDeleted : {
+            type : Boolean,
+            default: false,
+        },
+        deletedAt : {
+            type : Date
+        }
     },
     {
         timestamps: true,

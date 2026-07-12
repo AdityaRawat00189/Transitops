@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import connectDB from "./src/config/db.js";
 import authRoutes from "./src/routes/authroutes.js";
+import vehicleRoutes from "./src/routes/vehicle.routes.js";
 
 dotenv.config();
 
@@ -21,7 +22,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Backend server is running 🚀");
 });
+
 app.use("/api/auth", authRoutes);
+app.use("/api/vehicles", vehicleRoutes);
 
 // Start server
 app.listen(PORT, () => {

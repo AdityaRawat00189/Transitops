@@ -2,18 +2,16 @@ import User from '../models/User.model.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-function generateToken(id){
+function generateToken(id, role){
     const my_secret_key = process.env.MY_SECRET_KEY;
     
-    return jwt.sign({id},my_secret_key,{expiresIn: '30d'})
+    return jwt.sign({id, role},my_secret_key,{expiresIn: '30d'})
 }
 
 const registerUser = async (req,res) => {
     try {
         const {name, email, password, role} = req.body;
-        
-
-        // 1. Basic Validation (rooNumber is Optional)
+  
         if(!name || !email || !password || !role) {
             return res.status(400).json({message : "Please Fill all mandatory fields"});
         }
@@ -26,7 +24,6 @@ const registerUser = async (req,res) => {
         if(userExists) {
             return res.status(409).json({message : "User already exists"})
         }
-
         
         const user = await User.create({
             name,
@@ -40,7 +37,7 @@ const registerUser = async (req,res) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            token: generateToken(user._id),
+            token: generateToken(user._id, user.role),
         });
 
     } catch (error) {
@@ -69,7 +66,7 @@ const loginUser = async (req,res) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            token: generateToken(user._id)
+            token: generateToken(user._id, user.role),
         })
 
     } catch (error) {
