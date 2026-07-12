@@ -1,13 +1,19 @@
-
+import Trip from "../models/trip.model.js";
 
 createTrip()
 
-dispatchTrip()
 
-completeTrip()
-
-cancelTrip()
 
 getTrips()
 
 getTripById()
+
+
+
+const dispatchTrip = async (req,res) => {
+    
+}
+
+completeTrip()
+
+cancelTrip()
