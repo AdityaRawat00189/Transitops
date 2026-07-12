@@ -71,6 +71,11 @@ const tripSchema = new mongoose.Schema(
             ],
             default: "Draft",
         },
+        currentLocation: {
+            lat: Number,
+            lng: Number,
+            updatedAt: Date,
+        },
     },
     {
         timestamps: true,

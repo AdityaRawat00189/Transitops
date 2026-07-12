@@ -9,6 +9,7 @@ import { Vehicles } from '@/pages/Vehicles';
 import { Drivers } from '@/pages/Drivers';
 import { Dispatch } from '@/pages/Dispatch';
 import { Maintenance } from '@/pages/Maintenance';
+import { FuelLogs } from '@/pages/FuelLogs';
 import { Expenses } from '@/pages/Expenses';
 import { Analytics } from '@/pages/Analytics';
 import { Toaster } from '@/components/ui/toaster';
@@ -30,6 +31,7 @@ function AnimatedRoutes() {
             <Route path="/drivers" element={<PageTransition><Drivers /></PageTransition>} />
             <Route path="/dispatch" element={<PageTransition><Dispatch /></PageTransition>} />
             <Route path="/maintenance" element={<PageTransition><Maintenance /></PageTransition>} />
+            <Route path="/fuel" element={<PageTransition><FuelLogs /></PageTransition>} />
             <Route path="/expenses" element={<PageTransition><Expenses /></PageTransition>} />
             <Route path="/analytics" element={<PageTransition><Analytics /></PageTransition>} />
           </Route>

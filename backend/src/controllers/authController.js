@@ -1,4 +1,5 @@
 import User from '../models/User.model.js';
+import Driver from '../models/Driver.model.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
@@ -30,6 +31,20 @@ const registerUser = async (req,res) => {
             password,
             role,
         });
+
+        // Automatically create a Driver profile if the user signs up as a Driver
+        // We link the _id so that user._id perfectly matches driver._id for dispatch logic
+        if (role === 'Driver') {
+            await Driver.create({
+                _id: user._id,
+                name: user.name,
+                licenseNumber: `PENDING-${user._id.toString().slice(-6)}`,
+                licenseCategory: 'Pending',
+                licenseExpiry: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // 1 year from now
+                contactNumber: 'Pending',
+                status: 'Available'
+            });
+        }
 
         return res.status(201).json({
             _id: user._id,

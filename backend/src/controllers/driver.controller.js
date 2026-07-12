@@ -1,4 +1,5 @@
 import Driver from '../models/Driver.model.js';
+import Trip from '../models/Trip.model.js';
 
 
 //fetch all drivers
@@ -77,5 +78,22 @@ const deleteDriver = async (req, res) => {
         return res.status(500).json({message: "Failed to delete driver", error: error.message})
     }
 }
-
-export { getDrivers, getDriverById, createDriver, updateDriver, deleteDriver };
+const getDriverTrips = async (req, res) => {
+    try {
+        const driverId = req.params.id;
+        const trips = await Trip.find({ driver: driverId }).populate("vehicle").populate("driver");
+        return res.status(200).json({ message: "Trips fetched successfully", data: trips });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch trips", error: error.message });
+    }
+};
+const getDriverDispatchedTrips = async (req, res) => {
+    try {
+        const driverId = req.params.id;
+        const trips = await Trip.find({ driver: driverId, status: "Dispatched" }).populate("vehicle").populate("driver");
+        return res.status(200).json({ message: "Dispatched trips fetched successfully", data: trips });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch dispatched trips", error: error.message });
+    }
+};
+export { getDrivers, getDriverById, createDriver, updateDriver, deleteDriver, getDriverTrips, getDriverDispatchedTrips };

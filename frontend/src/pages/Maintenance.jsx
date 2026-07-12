@@ -20,12 +20,23 @@ export function Maintenance() {
 
   const fetchData = async () => {
     try {
-      const [vehiclesRes, logsRes] = await Promise.all([
+      const [vehiclesResult, logsResult] = await Promise.allSettled([
         getVehicles(),
         getMaintenanceLogs()
       ]);
-      setVehicles(vehiclesRes.data || []);
-      setLogs(logsRes.data?.data || []);
+
+      const extractArray = (res) => {
+        if (!res || res.status === 'rejected') return [];
+        const val = res.value;
+        return Array.isArray(val?.data?.data) ? val.data.data : (Array.isArray(val?.data) ? val.data : []);
+      };
+
+      setVehicles(extractArray(vehiclesResult));
+      setLogs(extractArray(logsResult));
+
+      if (logsResult.status === 'rejected') {
+        toast({ title: 'Warning', description: 'Failed to fetch maintenance logs.', variant: 'destructive' });
+      }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to fetch maintenance data', variant: 'destructive' });
     } finally {
@@ -82,7 +93,7 @@ export function Maintenance() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Select Vehicle</label>
-                <select name="vehicle" className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm" required>
+                <select name="vehicle" className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" required>
                   <option value="">Choose Available Vehicle...</option>
                   {availableVehicles.map(v => (
                     <option key={v._id} value={v._id}>{v.registrationNumber} ({v.model})</option>
@@ -91,7 +102,7 @@ export function Maintenance() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Maintenance Type</label>
-                <select name="maintenanceType" className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm" required>
+                <select name="maintenanceType" className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" required>
                   <option value="Repair">Repair</option>
                   <option value="Inspection">Inspection</option>
                   <option value="Routine Service">Routine Service</option>
@@ -118,7 +129,7 @@ export function Maintenance() {
       </Card>
 
       {/* Logs Table */}
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border shadow-md">
         <CardHeader className="py-4 border-b border-border">
           <CardTitle className="text-lg">Maintenance Logs</CardTitle>
           <CardDescription>Track active and completed repairs</CardDescription>
@@ -139,14 +150,25 @@ export function Maintenance() {
               </thead>
               <tbody className="divide-y divide-border">
                 {loading ? (
-                  <tr><td colSpan="7" className="text-center py-4">Loading...</td></tr>
-                ) : logs.map((log) => (
+                  [...Array(3)].map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4"><div className="h-4 bg-secondary rounded w-20"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-secondary rounded w-24"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-secondary rounded w-16"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-secondary rounded w-32"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-secondary rounded w-12"></div></td>
+                      <td className="px-6 py-4"><div className="h-6 bg-secondary rounded-full w-20"></div></td>
+                      <td className="px-6 py-4 text-right"><div className="h-8 bg-secondary rounded w-24 ml-auto"></div></td>
+                    </tr>
+                  ))
+                ) : logs.length > 0 ? (
+                  logs.map((log) => (
                   <tr key={log._id} className="hover:bg-secondary/20 transition-colors">
                     <td className="px-6 py-4">{new Date(log.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 font-medium text-foreground">{log.vehicle?.registrationNumber || 'Unknown'}</td>
                     <td className="px-6 py-4">{log.maintenanceType}</td>
                     <td className="px-6 py-4 truncate max-w-[200px]" title={log.description}>{log.description}</td>
-                    <td className="px-6 py-4">${log.cost}</td>
+                    <td className="px-6 py-4 font-bold text-foreground">${log.cost}</td>
                     <td className="px-6 py-4">
                       <Badge variant="outline" className={log.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/15 text-amber-500 border-amber-500/20'}>
                         {log.status}
@@ -154,15 +176,15 @@ export function Maintenance() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {log.status === 'Open' && (
-                        <Button variant="outline" size="sm" onClick={() => handleCloseMaintenance(log._id)} className="text-emerald-500 hover:bg-emerald-500 hover:text-white">
+                        <Button variant="outline" size="sm" onClick={() => handleCloseMaintenance(log._id)} className="text-emerald-500 hover:bg-emerald-500 hover:text-white border-emerald-500/50">
                           <CheckCircle className="w-4 h-4 mr-1" /> Mark Complete
                         </Button>
                       )}
                     </td>
                   </tr>
-                ))}
-                {logs.length === 0 && !loading && (
-                  <tr><td colSpan="7" className="text-center py-4 text-muted-foreground">No maintenance logs found</td></tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="7" className="text-center py-8 text-muted-foreground">No maintenance logs found</td></tr>
                 )}
               </tbody>
             </table>
