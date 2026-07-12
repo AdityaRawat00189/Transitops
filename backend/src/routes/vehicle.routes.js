@@ -5,10 +5,10 @@ import { getVehicles, addVehicle, updateVehicle, deleteVehicle } from "../contro
 import { protect, authorize } from "../middlewares/authmiddleware.js";
 
 
-router.get("/", protect, authorize("FleetManager"), getVehicles);
-router.post("/", protect, authorize("FleetManager"), addVehicle);
+router.get("/", protect, authorize("FleetManager", "Driver", "FinancialAnalyst"), getVehicles);
+router.post("/", protect, authorize("FleetManager", "Driver"), addVehicle);
 // router.get("/:id", protect, authorize("FleetManager"), getVehicle);
-router.patch("/:id", protect, authorize("FleetManager"), updateVehicle)
+router.patch("/:id", protect, authorize("FleetManager", "Driver"), updateVehicle)
 router.get(":id", protect, authorize("FleetManager", deleteVehicle));
 
 export default router
