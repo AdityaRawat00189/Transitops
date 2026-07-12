@@ -25,7 +25,7 @@ export function Login() {
       const res = await login(email, password);
       if (res.success) {
         toast({ title: "Welcome back!", description: "Successfully logged in." });
-        navigate('/');
+        navigate('/dashboard');
       } else {
         toast({ title: "Login Failed", description: res.message, variant: "destructive" });
       }
@@ -35,7 +35,7 @@ export function Login() {
       const res = await register(name, email, password, role);
       if (res.success) {
         toast({ title: "Account Created", description: "Successfully registered and logged in." });
-        navigate('/');
+        navigate('/dashboard');
       } else {
         toast({ title: "Registration Failed", description: res.message, variant: "destructive" });
       }

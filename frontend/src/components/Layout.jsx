@@ -15,7 +15,7 @@ export function Layout() {
 
   // Exact RBAC mappings based on backend string values
   const NAV_ITEMS = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['FleetManager', 'SafetyOfficer', 'FinancialAnalyst'] },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['FleetManager', 'SafetyOfficer', 'FinancialAnalyst'] },
     { name: 'Vehicles', path: '/vehicles', icon: Truck, roles: ['FleetManager', 'SafetyOfficer'] },
     { name: 'Drivers', path: '/drivers', icon: Users, roles: ['FleetManager', 'SafetyOfficer'] },
     { name: 'Dispatch/Trips', path: '/dispatch', icon: Send, roles: ['FleetManager', 'Driver'] },

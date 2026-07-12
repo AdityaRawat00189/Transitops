@@ -23,7 +23,7 @@ export function Drivers() {
   const fetchDrivers = async () => {
     try {
       const res = await getDrivers();
-      setDrivers(res.data);
+      setDrivers(res.data?.data || res.data || []);
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to fetch drivers', variant: 'destructive' });
     } finally {

@@ -229,7 +229,7 @@ export function Dispatch() {
                 </div>
               )}
 
-              {trip.status === 'Dispatched' && role === 'Driver' && (
+              {trip.status === 'Dispatched' && (role === 'Driver' || role === 'FleetManager') && (
                 <div className="pt-2">
                   <Dialog>
                     <DialogTrigger asChild>

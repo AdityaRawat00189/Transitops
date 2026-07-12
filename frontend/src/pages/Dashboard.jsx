@@ -1,22 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Truck, Activity, Wrench, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
+import { getVehicles, getTrips } from '@/api/services';
 
 export function Dashboard() {
+  const [vehicles, setVehicles] = useState([]);
+  const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [vehiclesRes, tripsRes] = await Promise.all([
+          getVehicles(),
+          getTrips()
+        ]);
+        setVehicles(vehiclesRes.data || []);
+        setTrips(tripsRes.data?.data || []);
+      } catch (error) {
+        console.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const totalVehicles = vehicles.filter(v => v.status !== 'Retired').length;
+  const availableVehicles = vehicles.filter(v => v.status === 'Available').length;
+  const inMaintenance = vehicles.filter(v => v.status === 'InShop').length;
+  const activeTrips = trips.filter(t => t.status === 'Dispatched').length;
+  const utilization = totalVehicles > 0 ? Math.round(((totalVehicles - availableVehicles - inMaintenance) / totalVehicles) * 100) : 0;
+
   const kpis = [
-    { title: "Active Vehicles", value: "45", icon: Truck, trend: "+12%" },
-    { title: "Available Vehicles", value: "18", icon: CheckCircle2, trend: "-2%" },
-    { title: "In Maintenance", value: "5", icon: Wrench, trend: "+1%" },
-    { title: "Active Trips", value: "32", icon: Activity, trend: "+8%" },
-    { title: "Fleet Utilization", value: "85%", icon: TrendingUp, trend: "+5%" },
+    { title: "Active Vehicles", value: totalVehicles.toString(), icon: Truck, trend: "Current" },
+    { title: "Available Vehicles", value: availableVehicles.toString(), icon: CheckCircle2, trend: "Ready" },
+    { title: "In Maintenance", value: inMaintenance.toString(), icon: Wrench, trend: "In Shop" },
+    { title: "Active Trips", value: activeTrips.toString(), icon: Activity, trend: "On Road" },
+    { title: "Fleet Utilization", value: `${utilization}%`, icon: TrendingUp, trend: "Active" },
   ];
 
-  const alerts = [
-    { id: 1, message: "Driver John Doe license expires in 5 days.", severity: "high", time: "2 hours ago" },
-    { id: 2, message: "Vehicle V-102 due for scheduled maintenance.", severity: "medium", time: "5 hours ago" },
-    { id: 3, message: "Trip T-45 delayed due to weather.", severity: "medium", time: "1 day ago" },
-  ];
+  // Generate dynamic alerts from trips and vehicles
+  const alerts = [];
+  vehicles.filter(v => v.status === 'InShop').forEach(v => {
+    alerts.push({ id: `v-${v._id}`, message: `Vehicle ${v.registrationNumber} is currently in maintenance.`, severity: "medium", time: "Active" });
+  });
+  trips.filter(t => t.status === 'Cancelled').forEach(t => {
+    alerts.push({ id: `t-${t._id}`, message: `Trip from ${t.source} to ${t.destination} was cancelled.`, severity: "high", time: "Recent" });
+  });
 
   return (
     <div className="space-y-6">
@@ -29,20 +61,17 @@ export function Dashboard() {
             <option>Heavy Truck</option>
             <option>Van</option>
           </select>
-          <select className="bg-card text-card-foreground border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-            <option>All Regions</option>
-            <option>North</option>
-            <option>South</option>
-          </select>
         </div>
       </div>
 
       {/* KPIs Grid */}
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
-        {kpis.map((kpi, index) => {
+        {loading ? (
+          <div className="col-span-5 py-8 text-center text-muted-foreground">Loading dashboard data...</div>
+        ) : kpis.map((kpi, index) => {
           const Icon = kpi.icon;
           return (
-            <Card key={index} className="bg-card border-border">
+            <Card key={index} className="bg-card border-border shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
                 <Icon className="w-4 h-4 text-muted-foreground" />
@@ -50,9 +79,7 @@ export function Dashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">{kpi.value}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  <span className={kpi.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}>
-                    {kpi.trend}
-                  </span> from last month
+                  <span className="text-cyan-500">{kpi.trend}</span>
                 </p>
               </CardContent>
             </Card>
@@ -61,16 +88,16 @@ export function Dashboard() {
       </div>
 
       {/* Recent Alerts Feed */}
-      <Card className="col-span-3 bg-card border-border">
+      <Card className="col-span-3 bg-card border-border shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <AlertTriangle className="w-5 h-5 text-amber-500" />
-            Recent Alerts
+            Active Alerts
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {alerts.map((alert) => (
+            {alerts.length > 0 ? alerts.slice(0, 5).map((alert) => (
               <div key={alert.id} className="flex items-start justify-between border-b border-border pb-4 last:border-0 last:pb-0">
                 <div>
                   <p className="text-sm font-medium text-foreground">{alert.message}</p>
@@ -80,7 +107,9 @@ export function Dashboard() {
                   {alert.severity}
                 </Badge>
               </div>
-            ))}
+            )) : (
+              <p className="text-muted-foreground text-sm">No active alerts at this time.</p>
+            )}
           </div>
         </CardContent>
       </Card>

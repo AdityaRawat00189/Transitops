@@ -16,6 +16,7 @@ export const completeTrip = (id, data) => api.patch(`/trips/complete/${id}`, dat
 // Maintenance
 export const getMaintenanceLogs = () => api.get('/maintenance');
 export const logMaintenance = (data) => api.post('/maintenance', data);
+export const closeMaintenance = (id) => api.patch(`/maintenance/${id}`);
 export const getExpenses = () => api.get('/expenses');
 
 // Analytics

@@ -8,6 +8,7 @@ import vehicleRoutes from "./src/routes/vehicle.routes.js";
 import driverRoutes from "./src/routes/driver.routes.js";
 import tripRoutes from "./src/routes/trip.routes.js";
 import maintenanceRoutes from './src/routes/maintenance.route.js'
+import fuelRoutes from './src/routes/fuel.route.js'
 dotenv.config();
 
 // Connect to MongoDB
@@ -30,6 +31,8 @@ app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/drivers", driverRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/maintenance", maintenanceRoutes);
+app.use("/api/fuel", fuelRoutes);
+
 
 // Start server
 app.listen(PORT, () => {

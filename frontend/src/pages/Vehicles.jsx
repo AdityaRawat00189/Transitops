@@ -23,7 +23,7 @@ export function Vehicles() {
   const fetchVehicles = async () => {
     try {
       const res = await getVehicles();
-      setVehicles(res.data);
+      setVehicles(res.data?.data || res.data || []);
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to fetch vehicles', variant: 'destructive' });
     } finally {

@@ -103,17 +103,13 @@ const createTrip = async(req, res) => {
 }
 
 const dispatchTrip = async (req, res) => {
-    const session = await mongoose.startSession();
-
     try {
-        session.startTransaction();
-        const { d} = req.params;
+        const { id } = req.params;
 
         // Find Trip
-        const trip = await Trip.findById(id).session(session);
+        const trip = await Trip.findById(id);
 
         if (!trip) {
-            await session.abortTransaction();
             return res.status(404).json({
                 success: false,
                 message: "Trip not found."
@@ -122,7 +118,6 @@ const dispatchTrip = async (req, res) => {
 
         // Only Draft trips can be dispatched
         if (trip.status !== "Draft") {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Only draft trips can be dispatched."
@@ -130,10 +125,9 @@ const dispatchTrip = async (req, res) => {
         }
 
         // Find Vehicle
-        const vehicle = await Vehicle.findById(trip.vehicle).session(session);
+        const vehicle = await Vehicle.findById(trip.vehicle);
 
         if (!vehicle) {
-            await session.abortTransaction();
             return res.status(404).json({
                 success: false,
                 message: "Vehicle not found."
@@ -141,10 +135,9 @@ const dispatchTrip = async (req, res) => {
         }
 
         // Find Driver
-        const driver = await Driver.findById(trip.driver).session(session);
+        const driver = await Driver.findById(trip.driver);
 
         if (!driver) {
-            await session.abortTransaction();
             return res.status(404).json({
                 success: false,
                 message: "Driver not found."
@@ -153,7 +146,6 @@ const dispatchTrip = async (req, res) => {
 
         // Vehicle Validations
         if (vehicle.status === "Retired") {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Vehicle is retired."
@@ -161,7 +153,6 @@ const dispatchTrip = async (req, res) => {
         }
 
         if (vehicle.status === "InShop") {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Vehicle is under maintenance."
@@ -169,7 +160,6 @@ const dispatchTrip = async (req, res) => {
         }
 
         if (vehicle.status === "OnTrip") {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Vehicle is already on another trip."
@@ -178,7 +168,6 @@ const dispatchTrip = async (req, res) => {
 
         // Driver Validations
         if (driver.status === "Suspended") {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Driver is suspended."
@@ -186,7 +175,6 @@ const dispatchTrip = async (req, res) => {
         }
 
         if (driver.status === "OffDuty") {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Driver is off duty."
@@ -194,7 +182,6 @@ const dispatchTrip = async (req, res) => {
         }
 
         if (driver.status === "OnTrip") {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Driver is already on another trip."
@@ -203,7 +190,6 @@ const dispatchTrip = async (req, res) => {
 
         // License Validation
         if (driver.licenseExpiry < new Date()) {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Driver license has expired."
@@ -212,7 +198,6 @@ const dispatchTrip = async (req, res) => {
 
         // Cargo Validation
         if (trip.cargoWeight > vehicle.maxLoadCapacity) {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Cargo exceeds vehicle capacity."
@@ -222,7 +207,7 @@ const dispatchTrip = async (req, res) => {
         // Update Trip
         trip.status = "Dispatched";
         trip.dispatchTime = new Date();
-        trip.startOdometer = vehicle.odometer;
+        trip.startOdometer = vehicle.odometer || 0;
 
         // Update Vehicle
         vehicle.status = "OnTrip";
@@ -230,11 +215,9 @@ const dispatchTrip = async (req, res) => {
         // Update Driver
         driver.status = "OnTrip";
 
-        await trip.save({ session });
-        await vehicle.save({ session });
-        await driver.save({ session });
-
-        await session.commitTransaction();
+        await trip.save();
+        await vehicle.save();
+        await driver.save();
 
         return res.status(200).json({
             success: true,
@@ -243,25 +226,16 @@ const dispatchTrip = async (req, res) => {
         });
 
     } catch (error) {
-
-        await session.abortTransaction();
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: "Internal Server Error"
+            message: error.message || "Internal Server Error"
         });
-
-    } finally {
-        session.endSession();
     }
 }
 
 const completeTrip = async (req, res) => {
-        const session = await mongoose.startSession();
-
     try {
-
-        session.startTransaction();
         const {id} = req.params;
 
         const {
@@ -271,11 +245,9 @@ const completeTrip = async (req, res) => {
         } = req.body;
 
         // Find Trip
-        const trip = await Trip.findById(id).session(session);
+        const trip = await Trip.findById(id);
 
         if (!trip) {
-            await session.abortTransaction();
-
             return res.status(404).json({
                 success: false,
                 message: "Trip not found."
@@ -284,9 +256,6 @@ const completeTrip = async (req, res) => {
 
         // Only dispatched trips can be completed
         if (trip.status !== "Dispatched") {
-
-            await session.abortTransaction();
-
             return res.status(400).json({
                 success: false,
                 message: "Only dispatched trips can be completed."
@@ -294,12 +263,9 @@ const completeTrip = async (req, res) => {
         }
 
         // Find Vehicle
-        const vehicle = await Vehicle.findById(trip.vehicle).session(session);
+        const vehicle = await Vehicle.findById(trip.vehicle);
 
         if (!vehicle) {
-
-            await session.abortTransaction();
-
             return res.status(404).json({
                 success: false,
                 message: "Vehicle not found."
@@ -307,12 +273,9 @@ const completeTrip = async (req, res) => {
         }
 
         // Find Driver
-        const driver = await Driver.findById(trip.driver).session(session);
+        const driver = await Driver.findById(trip.driver);
 
         if (!driver) {
-
-            await session.abortTransaction();
-
             return res.status(404).json({
                 success: false,
                 message: "Driver not found."
@@ -321,7 +284,6 @@ const completeTrip = async (req, res) => {
 
         // Validate input
         if ( endOdometer == null || fuelConsumed == null || revenue == null ) {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "All fields are required."
@@ -330,7 +292,6 @@ const completeTrip = async (req, res) => {
 
         // End odometer validation
         if (endOdometer < trip.startOdometer) {
-            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "End odometer cannot be less than start odometer."
@@ -338,8 +299,7 @@ const completeTrip = async (req, res) => {
         }
 
         // Calculate actual distance
-        const actualDistance =
-            endOdometer - trip.startOdometer;
+        const actualDistance = endOdometer - trip.startOdometer;
 
         // Update Trip
         trip.endOdometer = endOdometer;
@@ -356,11 +316,9 @@ const completeTrip = async (req, res) => {
         // Update Driver
         driver.status = "Available";
 
-        await trip.save({ session });
-        await vehicle.save({ session });
-        await driver.save({ session });
-
-        await session.commitTransaction();
+        await trip.save();
+        await vehicle.save();
+        await driver.save();
 
         return res.status(200).json({
             success: true,
@@ -369,39 +327,27 @@ const completeTrip = async (req, res) => {
         });
 
     } catch (error) {
-        await session.abortTransaction();
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: "Internal Server Error"
+            message: error.message || "Internal Server Error"
         });
-
-    } finally {
-        session.endSession();
     }
 }
 const cancelTrip = async (req, res) => {
-    const session = await mongoose.startSession();
     try {
         const id = req.params.id;
         const trip = await Trip.findById(id);
-        session.startTransaction();
-
-        const driverId = trip.driver;
-        const driver = await Driver.findById(driverId);
-        const vechicleId = trip.vehicle;
-        const vehicle = await Vehicle.findById(vechicleId);
 
         if (!trip) {
-            await session.abortTransaction();
             return res.status(404).json({
                 success: false,
                 message: "Trip not found."
             });
         }
 
-        
-        // Only Draft or Dispatched or completed trips can be cancelled
+        const driver = await Driver.findById(trip.driver);
+        const vehicle = await Vehicle.findById(trip.vehicle);
 
         //check it is already cancelled
         if(trip.status === "Cancelled"){
@@ -411,15 +357,19 @@ const cancelTrip = async (req, res) => {
             });
         }
         
-
         //cancel the trip
         trip.status = "Cancelled";
         await trip.save();
-        driver.status = "Available";
-        vehicle.status = "Available";
-        await driver.save();
-        await vehicle.save();
-        await session.commitTransaction();
+        
+        if (driver) {
+            driver.status = "Available";
+            await driver.save();
+        }
+        if (vehicle) {
+            vehicle.status = "Available";
+            await vehicle.save();
+        }
+
         return res.status(200).json({
             success: true,
             message: "Trip cancelled successfully.",
@@ -427,13 +377,11 @@ const cancelTrip = async (req, res) => {
         });
 
     } catch (error) {
-        await session.abortTransaction();
+        console.error(error);
         return res.status(500).json({
             success: false,
-            message: "Internal Server Error"
+            message: error.message || "Internal Server Error"
         });
-    } finally {
-        session.endSession();
     }
 }
 
